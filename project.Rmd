@@ -1,0 +1,194 @@
+---
+title: "Regression Models Course Project"
+author: "Tjeerd Luykx"
+date: "Thursday, August 20, 2015"
+output: pdf_document
+---
+
+## Executive Summary
+
+In this report the ```mtcars``` dataset is analyzed for the relationship the fuel efficiency (MPG = miles per US gallon) has with other variables of the dataset. The dataset is extracted from  Motor Trend, a magazine about the automobile industry. Regression models are used to determine the effect of automatic and manual transmission of the MPG variable. In this report it is shown that manuel transmission is more fuel efficient. Furthermore, several models other models are made to determine the relationschip of fuel efficiency with other variables in the dataset. These models are compared based on the adjusted R squared value. By determining the value of these models the adequacy of relating fuel efficiency to transmission type is asssessed. 
+
+## 1. Exploratory Data Analysis
+
+### 1.1 mtcars dataset
+
+The data was extracted from the 1974 Motor Trend US magazine, and comprises fuel consumption and 10 aspects of automobile design and performance for 32 automobiles (1973–74 models). The 11 variables are:
+
+- ```mpg```: Miles per US gallon
+- ```cyl```: Number of cylinders
+- ```disp```: Displacement (cubic inches)
+- ```hp```: Gross horsepower
+- ```drat```: Rear axle ratio
+- ```wt```: Weight (lb / 1000)
+- ```qsec```: 1 / 4 mile time
+- ```vs```: V/S
+- ```am```: Transmission (0 = automatic, 1 = manual)
+- ```gear```: Number of forward gears
+- ```carb```: Number of carburetors
+
+### 1.2 Results
+
+```{r}
+data(mtcars)
+fit3 <- lm(mpg ~ cyl + wt, data = mtcars)
+fit7 <- lm(mpg ~ am, data = mtcars)
+fit8 <- lm(mpg ~ cyl + wt + am, data=mtcars)
+```
+
+
+The results of an exploratory analysis on the data are depicted with various tables in the Appendix of this report. From the analysis in the appendix 3 different models are selected that relate fuel efficiency to specific variables. These models are:
+
+- model 3 relates the number of cylinders and the weight to fuel efficency and achieves adjusted R squared of `r summary(fit3)$adj.r.squared`.
+- model 7 relates the type of type transmission to fuel efficiency and achieves adjusted R squared of `r summary(fit7)$adj.r.squared`.
+- model 8 relates the number of cylinders, the weight and the type of transmission to fuel effiency and achieves adjusted R squared of `r summary(fit8)$adj.r.squared`.
+
+In the tables below the regression coefficients are explained for these 3 models.
+
+### 1.2.1 Model 3
+
+```{r}
+library(xtable)
+print(xtable(fit3), type="html")
+```
+
+The table above from model 3 it is obserbed that as the number of cylinders increase, assuming weight stays the same, the fuel efficiency decreases by 1.5 miles per gallon for one additional cylinder. Note that as the weight increases by 1000 lb, assuming the number of cylinders stays the same, the fuel efficiency decreases by 3.2 miles per gallon. Model 3 has the highest adjusted R squared value of all selected models with `r summary(fit3)$adj.r.squared`.
+
+### 1.2.2 Model 7
+
+```{r}
+fit7 <- lm(mpg ~ am, data = mtcars)
+print(xtable(fit7), type="html")
+```
+
+The table above from model 7 indicates that cars with a manual transmission achieve a fuel efficiency of 7.24 miles per gallon higher than automatic transmission. Nonetheless, this model has a low value for the adjusted R squared with `r summary(fit7)$adj.r.squared`. This indicates that in this model transmission is not able to explain the variance in mpg sufficiently. 
+
+### 1.2.3 Model 8
+
+```{r}
+fit8 <- lm(mpg ~ cyl + wt + am, data=mtcars)
+print(xtable(fit8), type="html")
+```
+
+The above table of model 8 using cylinders, weight and transimission to predict fuel efficiency achieves an adjusted R squared value of `r summary(fit8)$adj.r.squared`. This is still lower than the adjusted R squared value of model 3.
+
+### 1.2.4 Predictions and Confidence Intervals
+
+In this paragraph the prediction and confidence values of model 3 and model 8 are compared. For model 3 the fuel efficiency value in mpg for a vehicle with the mean weight and mean number of variables is:
+
+```{r}
+nd1 <- data.frame(wt = mean(mtcars$wt), cyl = mean(mtcars$cyl), am=0)
+nd2 <- data.frame(wt = mean(mtcars$wt), cyl = mean(mtcars$cyl), am=1)
+predict(fit3, newdata = nd1, level=0.95, interval="confidence")
+```
+
+The predicted value for fuel efficiency in mpg for automatic transmission and manual transmission respectively are:
+
+```{r}
+predict(fit8, newdata = nd1, level=0.95, interval="confidence")
+predict(fit8, newdata = nd2, level=0.95, interval="confidence")
+```
+
+The obtained prediction values for model 3 (20.09) and model 8 (20.2) display a small difference. Therefore the transmission type does not affect a significant difference to the fuel efficiency.
+
+
+## 2. Conclusion
+
+Although in this data set on average manual vehicles achieve a fuel effiency of 7.2 miles per gallon more than automatic vehicles, transmission type is not a particularly good predictor of fuel efficiency. We were able to identify that the number of cylinders and the weight of the automobile are good predictors of fuel efficiency, achieving an adjusted R squared of 0.82. If we add transmission type to this model, then the difference in fuel effiency for a manual transmission is much smaller, just 0.18 miles per gallon for a vehicle with the same weight and number of cylinders. Therefore we conclude that number of cylinders and weight are good predictors of fuel efficiency, but transmission type is not.
+
+## Appendix
+
+### Anova Table
+
+In order to investigate the relationship between the fuel efficiency and the other variables of the dataset an analysis of variance table is obtained:
+```{r, warning=FALSE}
+library(xtable)
+
+data(mtcars)
+options(contrasts=c("contr.sum", "contr.poly"))
+aov1 <- aov(mpg ~ ., data=mtcars)
+print(xtable(aov1), type="html")
+```
+
+From the table it observed that three different variables are significant by being below the level of 0.05 for the p-value. These variables are:
+
+- ```cyl```: Number of cylinders
+- ```disp```: Displacement (cubic inches)
+- ```wt```: Weight (lb / 1000)
+
+Possible confounders are detected by determining the correlations between all 11 variables. This correlation matrix is displayed below.
+
+```{r}
+c <- cor(mtcars)
+c[upper.tri(c)] <- NA
+print(xtable(c), type="html")
+```
+
+From the table able it can be seen that there exists:
+
+- a strong relationship between displacement and cylinders (0.9) and between displacement and weight (0.89)
+- a less strong relationschip between weight and cylinders (0.79)
+
+### Multiple Regression Models
+
+By aquiring multiple regression models of variables on ```mpg``` the prediction adequacy can be determined. The multipe regression models are:
+
+```{r}
+fit1 <- lm(mpg ~ cyl, data = mtcars)
+fit2 <- lm(mpg ~ wt, data = mtcars)
+fit3 <- lm(mpg ~ cyl + wt, data = mtcars)
+fit4 <- lm(mpg ~ disp, data = mtcars)
+fit5 <- lm(mpg ~ disp + cyl, data = mtcars)
+fit6 <- lm(mpg ~ disp + cyl + wt, data = mtcars)
+```
+
+The models have the following adjusted R squared values:
+
+- model 1: cylinders to fuel efficiency `r summary(fit1)$adj.r.squared`.
+- model 2: weight to fuel efficiency `r summary(fit2)$adj.r.squared`.
+- model 3: cylinders and weight to fuel efficiency `r summary(fit3)$adj.r.squared`.
+- model 4: displacement to fuel efficiency `r summary(fit4)$adj.r.squared`.
+- model 5: displacement and cylinders to fuel efficiency `r summary(fit5)$adj.r.squared`.
+- model 6: displacement, cylinders and weight to fuel efficiency `r summary(fit6)$adj.r.squared`.
+
+By the calculting the adjusted R squared value the significance relationschip to fuel efficiency is assessed. It can be seen that model 3 has the best adjusted R squared value. Displacement is strongly related to cylinders and weight so is a confounder and does not impart any additional information.
+
+### Residual Analysis and Diagnostics
+
+At this point, the diagnostic plots of the residuals for model 3 can be checked.
+
+```{r}
+par(mfrow=c(2,2)) 
+plot(fit3)
+```
+
+The plot above indicates the outliers in the dataset which are the: Toyota Corolla, Toyota Corona, Fiat 128 and Chrysler Imperial.The Toyota Corolla and Fiat 128 have a very high fuel efficiency (33.9 and 32.4 mpg respectively), whereas the Imperial has low fuel efficency (14.7 mpg). The Toyota Corona achieves medium fuel efficiency (24.9 mpg).
+
+### Boxplot Transmission against MPG
+
+The boxplot below displays the difference in the average of fuel efficiency per transmission type. The plot determines that manual transmission is related to a more efficient fuel usage. 
+
+```{r}
+boxplot(mpg ~ am, data=mtcars, xlab = "Transmission", ylab = "MPG", col=terrain.colors(3))
+title(main = "Figure 2: Boxplot of Transmission against MPG")
+legend("topleft", inset=.05, title="Transmission Type", c("Automatic", "Manual"), fill=terrain.colors(3), horiz=TRUE)
+```
+
+### Linear Regression of MPG with Transmission 
+
+```{r}
+fit7 <- lm(mpg ~ am, data = mtcars)
+print(xtable(fit7), type="html")
+```
+
+The table above indicates that cars with a manual transmission achieve a fuel efficiency of 7.24 miles per gallon higher than automatic transmission. Nonetheless, this model has a low value for the adjusted R squared with `r summary(fit7)$adj.r.squared`. This indicates that in this model transmission is not able to explain the variance in mpg sufficiently. 
+
+### Multiple Regression of MPG
+
+```{r}
+fit8 <- lm(mpg ~ cyl + wt + am, data=mtcars)
+print(xtable(fit8), type="html")
+```
+
+The above model using cylinders, weight and transimission to predict fuel efficiency achieves an adjusted R squared value of `r summary(fit8)$adj.r.squared`. This is still lower than the adjusted R squared value of model 3. 
+
